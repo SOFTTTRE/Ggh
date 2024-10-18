@@ -162,7 +162,6 @@ async function performLogin(username, password) {
         const url = page.url();
         const content = await page.content();
         
-        // يمكنك تعديل هذه الشروط حسب الموقع
         if (url.includes('dashboard') || content.includes('welcome') || content.includes('الصفحة الرئيسية')) {
             return { success: true, page };
         } else {
@@ -179,7 +178,6 @@ async function performLogin(username, password) {
 // دالة تحديث معرف المتصل
 async function updateCallerId(page, newCallerId) {
     try {
-        // التنقل إلى صفحة تحديث المعرف
         await page.goto('http://sip.vipcaller.net/mbilling/user/profile', {
             waitUntil: 'networkidle0'
         });
@@ -197,7 +195,6 @@ async function updateCallerId(page, newCallerId) {
             page.waitForNavigation({ waitUntil: 'networkidle0' })
         ]);
 
-        // التحقق من نجاح التحديث
         const content = await page.content();
         return {
             success: content.includes('success') || content.includes('تم التحديث بنجاح')
