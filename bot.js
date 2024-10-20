@@ -2,11 +2,9 @@ const TelegramBot = require('node-telegram-bot-api');
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 
-// توكن البوت
 const token = '6845291404:AAFwsPGqdbSOjx19EVXjjh4EnUQD1v1vJlc';
 const bot = new TelegramBot(token, { polling: true });
 
-// حالات المحادثة
 const STATES = {
     IDLE: 'IDLE',
     WAITING_USERNAME: 'WAITING_USERNAME',
@@ -14,11 +12,9 @@ const STATES = {
     WAITING_CALLER_ID: 'WAITING_CALLER_ID'
 };
 
-// تخزين حالة المستخدم
 const userStates = new Map();
 const userSessions = new Map();
 
-// تهيئة المتصفح
 let browser;
 (async () => {
     browser = await puppeteer.launch({
@@ -27,7 +23,6 @@ let browser;
     });
 })();
 
-// معالجة أمر البداية
 bot.onText(/\/start/, async (msg) => {
     const chatId = msg.chat.id;
     userStates.set(chatId, STATES.IDLE);
@@ -43,7 +38,6 @@ bot.onText(/\/start/, async (msg) => {
     bot.sendMessage(chatId, 'مرحباً بك في بوت تغيير معرف المتصل\nاضغط على زر تسجيل الدخول للبدء', opts);
 });
 
-// معالجة النقر على الأزرار
 bot.on('callback_query', async (callbackQuery) => {
     const chatId = callbackQuery.message.chat.id;
     const data = callbackQuery.data;
@@ -54,7 +48,6 @@ bot.on('callback_query', async (callbackQuery) => {
     }
 });
 
-// معالجة الرسائل النصية
 bot.on('message', async (msg) => {
     if (msg.text && !msg.text.startsWith('/')) {
         const chatId = msg.chat.id;
@@ -125,7 +118,6 @@ bot.on('message', async (msg) => {
                 }
                 
                 userStates.set(chatId, STATES.IDLE);
-                // إغلاق الصفحة بعد الانتهاء
                 if (currentSession.page) {
                     await currentSession.page.close();
                 }
@@ -135,7 +127,6 @@ bot.on('message', async (msg) => {
     }
 });
 
-// دالة تسجيل الدخول
 async function performLogin(username, password) {
     const page = await browser.newPage();
     try {
@@ -144,21 +135,17 @@ async function performLogin(username, password) {
             timeout: 60000
         });
 
-        // انتظار ظهور حقول تسجيل الدخول
         await page.waitForSelector('input[name="username"]');
         await page.waitForSelector('input[name="password"]');
 
-        // تعبئة البيانات
         await page.type('input[name="username"]', username);
         await page.type('input[name="password"]', password);
 
-        // النقر على زر تسجيل الدخول
         await Promise.all([
             page.click('button[type="submit"]'),
             page.waitForNavigation({ waitUntil: 'networkidle0' })
         ]);
 
-        // التحقق من نجاح تسجيل الدخول
         const url = page.url();
         const content = await page.content();
         
@@ -175,21 +162,17 @@ async function performLogin(username, password) {
     }
 }
 
-// دالة تحديث معرف المتصل
 async function updateCallerId(page, newCallerId) {
     try {
         await page.goto('http://sip.vipcaller.net/mbilling/user/profile', {
             waitUntil: 'networkidle0'
         });
 
-        // انتظار ظهور حقل معرف المتصل
         await page.waitForSelector('input[name="CallerID"]');
 
-        // مسح القيمة القديمة وإدخال القيمة الجديدة
         await page.$eval('input[name="CallerID"]', el => el.value = '');
         await page.type('input[name="CallerID"]', newCallerId);
 
-        // النقر على زر الحفظ
         await Promise.all([
             page.click('button[type="submit"]'),
             page.waitForNavigation({ waitUntil: 'networkidle0' })
@@ -205,7 +188,6 @@ async function updateCallerId(page, newCallerId) {
     }
 }
 
-// معالجة إغلاق البوت
 process.on('SIGINT', async () => {
     if (browser) {
         await browser.close();
